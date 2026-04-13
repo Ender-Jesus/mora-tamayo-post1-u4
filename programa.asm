@@ -1,46 +1,68 @@
-; programa.asm — Laboratorio Post1 Unidad 4
-; Propósito: demostrar directivas de sección, datos y constantes en NASM
-; ── Constantes (EQU, no reservan memoria)
-────────────────────────────────
-CR EQU 0Dh ; Carriage Return
-LF EQU 0Ah ; Line Feed
-TERMINADOR EQU 24h ; "$" terminador de cadena para DOS
-ITERACIONES EQU 5 ; número de repeticiones del bucle
-; ── Datos inicializados
-──────────────────────────────────────────────────
+; programa.asm - Laboratorio Arquitectura UFPS
+; Estructura compatible con NASM 16-bit y ALINK
+
+; --- Constantes
+TERMINADOR  EQU 24h
+CR          EQU 0Dh
+LF          EQU 0Ah
+
 section .data
- bienvenida db "=== Laboratorio NASM — Unidad 4 ===", CR, LF,
-TERMINADOR
- separador db "----------------------------------------", CR, LF,
-TERMINADOR
- etiqueta_a db "Variable A (word): ", TERMINADOR
- etiqueta_b db "Variable B (dword): ", TERMINADOR
- fin_msg db "Programa finalizado correctamente.", CR, LF,
-TERMINADOR
- ; Tipos de datos demostrados
- var_byte db 42 ; 1 byte con valor 42
- var_word dw 1234h ; 2 bytes con valor 0x1234
- var_dword dd 0DEADBEEFh ; 4 bytes
- tabla_bytes db 10, 20, 30, 40, 50 ; 5 bytes consecutivos
-; ── Datos no inicializados
-───────────────────────────────────────────────
-section .bss
- buffer resb 80 ; 80 bytes para entrada (no usada aún)
- resultado resw 1 ; 1 word para almacenar cálculo
-; ── Código ejecutable
-────────────────────────────────────────────────────
+    msg_inicio db "Laboratorio Unidad 4 - NASM", CR, LF, "$"
+    msg_byte   db "Valor de var_byte: ", "$"
+    msg_fin    db CR, LF, "Proceso terminado.", CR, LF, "$"
+    
+    var_byte   db 42    ; El asterisco '*' en ASCII
+    tabla      db 49, 50, 51, 52, 53 ; Caracteres '1', '2', '3', '4', '5'
+
 section .text
- global main
+    global main
+
 main:
- ; Inicializar registro de segmento de datos
- mov ax, @data ; valor del segmento .data
- mov ds, ax ; DS apunta a la sección de datos
- ; Imprimir mensaje de bienvenida
- mov ah, 09h ; función DOS: imprimir cadena
- mov dx, bienvenida ; DX = dirección del mensaje
- int 21h ; llamar a DOS
- mov dx, separador
- int 21h
- ; Terminar el programa
- mov ax, 4C00h ; función DOS: terminar, código 0
- int 21h
+    ; Configurar el segmento de datos
+    mov ax, seg msg_inicio
+    mov ds, ax
+
+    ; 1. Imprimir mensaje de inicio (Función 09h)
+    mov ah, 09h
+    mov dx, msg_inicio
+    int 21h
+
+    ; 2. Imprimir etiqueta y variable (Función 02h)
+    mov ah, 09h
+    mov dx, msg_byte
+    int 21h
+
+    mov ah, 02h
+    mov dl, [var_byte]
+    int 21h
+
+    ; 3. Salto de linea
+    mov ah, 02h
+    mov dl, CR
+    int 21h
+    mov dl, LF
+    int 21h
+
+    ; 4. Bucle para imprimir tabla (Paso 4 de la guía)
+    mov si, tabla
+    mov cx, 5
+
+ciclo:
+    mov ah, 02h
+    mov dl, [si]
+    int 21h
+    
+    ; Imprimir espacio
+    mov dl, 20h
+    int 21h
+    
+    inc si
+    loop ciclo
+
+    ; 5. Finalizar (Paso 5 de la guía)
+    mov ah, 09h
+    mov dx, msg_fin
+    int 21h
+
+    mov ax, 4C00h
+    int 21h
